@@ -1,14 +1,31 @@
 import requests, csv
 from bs4 import BeautifulSoup
+from pymongo import MongoClient
 
-ano_inicial = 1966
+ano_inicial = 2008 #2807
 i = 1
 dif_i = 1
 dif = 1000
 
+#Conexión con la base de datos
+con = MongoClient()
+db = con.DG
+
+def insert_mongo(url, titulo, textos, ano):
+
+	boe = db.DG_BOE.find_one({"url":url})
+ 
+	if boe == None:
+ 
+		db.DG_BOE.update({'url':url},{"nombre":titulo,"text":textos, "ano":ano}, True)
+   
+	else:
+ 
+		print (f"[>][MONGODB] Ya está guardado previamente en mongoDB {url}")
+
 def saveincsv(url, titulo, textos, ano):
 
-    filename = "indultos-" + str(ano) + ".csv"
+    filename = "BOE-A-" + str(ano) + ".csv"
     dataset = open(filename, "a+")
     data = url + "|" + titulo + "|" + textos + "|" +  str(ano) + "\n"
     dataset.write(data)
@@ -41,7 +58,7 @@ def get_texto(XML):
 def main():
     global ano_inicial, i, dif, dif_i
 
-    while (ano_inicial < 2021) and (i < 320001):
+    while (ano_inicial < 2022) and (i < 320001):
 
         url = f"https://www.boe.es/diario_boe/xml.php?id=BOE-A-{ano_inicial}-{i}"
 
@@ -52,24 +69,30 @@ def main():
             XML = get_xml(url)
             titulo = get_titulo(XML)
             textos = get_texto(XML)
+
             if textos == "":
                 textos = "None"
             print(titulo)
             print(textos)
             print()
 
-            saveincsv(url, titulo, textos, ano_inicial)
+            #saveincsv(url, titulo, textos, ano_inicial)
+            insert_mongo(url, titulo, textos, ano_inicial)
             i += 1
-            
+            print(dif_i)
 
         except Exception as e:
 
             print (f"[>][ERROR EN LA PETICIÓN] {e}")
 
             dif_i += 1
+            print (f"Nº de errores: {dif_i}")
 
-            if dif_i == dif:
+            if dif_i >= dif:
+
                 ano_inicial +=1
+                dif_i = 0
+                i = 1
 
             else:
                 i += 1
