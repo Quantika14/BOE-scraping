@@ -13,11 +13,11 @@ db = con.DG
 
 def insert_mongo(url, titulo, textos, ano):
 
-	boe = db.DG_BOE.find_one({"url":url})
+	boe = db.DG_BORME.find_one({"url":url})
  
 	if boe == None:
  
-		db.DG_BOE.update({'url':url},{"nombre":titulo,"text":textos, "ano":ano}, True)
+		db.DG_BORME.update({'url':url},{"nombre":titulo,"text":textos, "ano":ano}, True)
    
 	else:
  
